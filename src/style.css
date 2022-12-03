@@ -7,3 +7,9 @@ body {
   top: 10px;
   left: 10px;
 }
+
+.buttons1 {
+  position: absolute;
+  top: 50px;
+  left: 10px;
+}
