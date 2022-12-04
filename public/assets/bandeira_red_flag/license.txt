@@ -1,0 +1,11 @@
+Model Information:
+* title:	Bandeira (Red Flag)
+* source:	https://sketchfab.com/3d-models/bandeira-red-flag-0f935eaebb2d4c2cb5bf1906b758c2e1
+* author:	Brancojucabala (https://sketchfab.com/brancojucabala)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Bandeira (Red Flag)" (https://sketchfab.com/3d-models/bandeira-red-flag-0f935eaebb2d4c2cb5bf1906b758c2e1) by Brancojucabala (https://sketchfab.com/brancojucabala) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

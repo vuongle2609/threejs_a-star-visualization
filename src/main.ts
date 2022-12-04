@@ -1,9 +1,22 @@
 import * as THREE from "three";
-import { Color } from "three";
+import { Color, Group } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { MINI_PLANE_GROUND_WIDTH } from "./constants";
+import { MINI_PLANE_GROUND_WIDTH } from "./configs/constants";
+import a_star from "./components/pathFind/a_star";
 import "./style.css";
 import { nodeTypeRecursive } from "./types";
+import modelGLTFLoader from "./components/models/gltfLoader";
+import {
+  AME_PATH,
+  ENVIROMENT_PATH,
+  ENVIROMENT_PATH_GRASS_1,
+  ENVIROMENT_PATH_GRASS_2,
+  ENVIROMENT_PATH_ROCK_1,
+  ENVIROMENT_PATH_ROCK_2,
+  ENVIROMENT_PATH_ROCK_3,
+  FLAG_PATH,
+} from "./configs/path";
+import Light from "./components/light";
 
 class Three {
   renderer: THREE.WebGLRenderer;
@@ -16,7 +29,25 @@ class Three {
   wallNode = this.createNode(1);
   playerNode = this.createNode(2);
   targetNode = this.createNode(3);
-  heuristicFunction = 1;
+  heuristicFunction: 1 | 2 | 3 = 1;
+  weight = 2;
+  objects: {
+    ameModel: THREE.Scene | null;
+    flagModel: THREE.Scene | null;
+    rock1: THREE.Scene | null;
+    rock2: THREE.Scene | null;
+    rock3: THREE.Scene | null;
+    grass1: THREE.Scene | null;
+    grass2: THREE.Scene | null;
+  } = {
+    ameModel: null,
+    flagModel: null,
+    rock1: null,
+    rock2: null,
+    rock3: null,
+    grass1: null,
+    grass2: null,
+  };
   mapArrayNumber1 = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -572,14 +603,49 @@ class Three {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color("#F5EBE0");
 
+    new Light(this.scene);
+
     this.control = new OrbitControls(this.camera, this.renderer.domElement);
 
-    this.initMapArray(this.mapArrayNumber1);
-    this.initPathProperties(this.mapArrayNumber1);
-    this.generateMap(this.mapArray);
+    const findPathAstar = new a_star(
+      this.playerNode,
+      this.targetNode,
+      this.ground,
+      this.mapArray,
+      10,
+      this.heuristicFunction,
+      this.weight
+    );
+
+    const loadAssets = async () => {
+      const models = await modelGLTFLoader([
+        AME_PATH,
+        FLAG_PATH,
+        ENVIROMENT_PATH_ROCK_1,
+        ENVIROMENT_PATH_ROCK_2,
+        ENVIROMENT_PATH_ROCK_3,
+        ENVIROMENT_PATH_GRASS_1,
+        ENVIROMENT_PATH_GRASS_2,
+      ]);
+      //@ts-ignore
+      const [ameModel, flagModel, rock1, rock2, rock3, grass1, grass2] = models;
+
+      this.objects.ameModel = ameModel;
+      this.objects.flagModel = flagModel;
+      this.objects.rock1 = rock1;
+      this.objects.rock2 = rock2;
+      this.objects.rock3 = rock3;
+      this.objects.grass1 = grass1;
+      this.objects.grass2 = grass2;
+
+      this.initMapArray(this.mapArrayNumber1);
+      this.initPathProperties(this.mapArrayNumber1);
+      this.generateMap(this.mapArray);
+    };
+    loadAssets();
 
     document.querySelector("#start")?.addEventListener("click", () => {
-      this.findPath();
+      findPathAstar.findPath();
     });
 
     Object.values(document.getElementsByClassName("map")).forEach(
@@ -596,6 +662,7 @@ class Three {
     Object.values(document.getElementsByClassName("distance")).forEach(
       (item, index) => {
         item?.addEventListener("click", () => {
+          //@ts-ignore
           this.heuristicFunction = index + 1;
         });
       }
@@ -605,322 +672,6 @@ class Three {
     this.camera.lookAt(0, 0, 0);
 
     this.RAF(0);
-  }
-
-  findPath() {
-    console.log("start a*");
-    const max = Math.max;
-    const abs = Math.abs;
-    const pow = Math.pow;
-    const sqrt = Math.sqrt;
-
-    const findDistance = (x1: number, y1: number, x2: number, y2: number) => {
-      switch (this.heuristicFunction) {
-        case 1:
-          return max(abs(x1 - x2), abs(y1 - y2));
-        case 2:
-          return abs(x1 - x2) + abs(y1 - y2);
-        case 3:
-          return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
-        default:
-          return 0;
-      }
-    };
-
-    const getNeighbours = (y: number, x: number) => {
-      const top = {
-        //top
-        x: x,
-        y: y - 1,
-      };
-
-      const left = {
-        //left
-        x: x - 1,
-        y,
-      };
-
-      const right = {
-        //right
-        x: x + 1,
-        y,
-      };
-
-      const bot = {
-        //bot
-        x: x,
-        y: y + 1,
-      };
-
-      return [
-        {
-          ...top,
-        },
-        {
-          //top_right
-          condition: [{ ...top }, { ...right }],
-          x: x + 1,
-          y: y - 1,
-        },
-        {
-          //top_left
-          condition: [{ ...top }, { ...left }],
-          x: x - 1,
-          y: y - 1,
-        },
-        {
-          ...left,
-        },
-        {
-          ...right,
-        },
-        {
-          ...bot,
-        },
-        {
-          //bot_right
-          condition: [{ ...bot }, { ...right }],
-          x: x + 1,
-          y: y + 1,
-        },
-        {
-          //bot_left
-          condition: [{ ...bot }, { ...left }],
-          x: x - 1,
-          y: y + 1,
-        },
-      ];
-    };
-
-    this.playerNode.f =
-      0 +
-      findDistance(
-        this.playerNode.position[1],
-        this.playerNode.position[0],
-        this.targetNode.position[1],
-        this.targetNode.position[0]
-      );
-
-    const open = [this.playerNode];
-
-    // const startFind = setInterval(() => {
-    //   if (open.length !== 0) {
-    //     const next = open[0];
-
-    //     if (next.code !== 3) {
-    //       this.ground
-    //         .getObjectByName(`${next.position[0]}+${next.position[1]}`)
-    //         //@ts-ignore
-    //         ?.material.color.set(new Color(0x874c62));
-    //     }
-
-    //     open.shift();
-
-    //     if (
-    //       next.position[0] === this.targetNode.position[0] &&
-    //       next.position[1] === this.targetNode.position[1]
-    //     ) {
-    //       console.log("end a*");
-
-    //       clearInterval(startFind);
-    //       let nodePath = next.prevNode;
-
-    //       let pathCount = 0;
-
-    //       // const colorPath = setInterval(() => {
-    //       //   if (nodePath) {
-    //       //     this.ground
-    //       //       .getObjectByName(
-    //       //         `${nodePath.position[0]}+${nodePath.position[1]}`
-    //       //       )
-    //       //       //@ts-ignore
-    //       //       ?.material.color.set(new Color(0xf4bfbf));
-    //       //     pathCount += 1;
-    //       //     nodePath = nodePath.prevNode;
-    //       //   } else {
-    //       //     console.log(pathCount);
-    //       //     clearInterval(colorPath);
-    //       //   }
-    //       // }, 0);
-
-    //       while (nodePath) {
-    //         this.ground
-    //           .getObjectByName(
-    //             `${nodePath.position[0]}+${nodePath.position[1]}`
-    //           )
-    //           //@ts-ignore
-    //           ?.material.color.set(new Color(0xf4bfbf));
-    //         pathCount += 1;
-    //         nodePath = nodePath.prevNode;
-    //       }
-    //       console.log(pathCount);
-    //       return;
-    //     }
-
-    //     getNeighbours(next.position[0], next.position[1]).forEach(
-    //       (neighbour) => {
-    //         const { x, y } = neighbour;
-    //         const neighbourTemp = this.mapArray[y]?.[x];
-
-    //         let pass = true;
-
-    //         if (neighbour?.condition) {
-    //           let count = 0;
-    //           neighbour?.condition.forEach((item) => {
-    //             if (this.mapArray[item.y]?.[item.x]) {
-    //               count += 1;
-    //             }
-    //           });
-    //           if (count == 2) {
-    //             pass = false;
-    //           }
-    //         }
-
-    //         if (
-    //           (neighbourTemp && neighbourTemp.code !== 1 && pass) ||
-    //           (neighbourTemp && neighbourTemp.code === 3)
-    //         ) {
-    //           const newG =
-    //             (next.g || 0) +
-    //             findDistance(
-    //               next.position[1],
-    //               next.position[0],
-    //               neighbour.x,
-    //               neighbour.y
-    //             );
-
-    //           if (neighbourTemp.g && newG < neighbourTemp.g) {
-    //             const { x, y } = neighbour;
-    //             neighbourTemp.position = [y, x];
-
-    //             neighbourTemp.g = newG;
-    //             neighbourTemp.f =
-    //               newG +
-    //               findDistance(
-    //                 x,
-    //                 y,
-    //                 this.targetNode.position[1],
-    //                 this.targetNode.position[0]
-    //               );
-
-    //             if (
-    //               !open.some((e) => e.position[1] === x && e.position[0] === y)
-    //             ) {
-    //               neighbourTemp.prevNode = next;
-    //               open.push(neighbourTemp);
-    //               open.sort((a, b) => a.f - b.f);
-    //             }
-    //           }
-    //         }
-    //       }
-    //     );
-    //   }
-    // }, 0);
-
-    while (open.length !== 0) {
-      const next = open[0];
-
-      if (next.code !== 3) {
-        this.ground
-          .getObjectByName(`${next.position[0]}+${next.position[1]}`)
-          //@ts-ignore
-          ?.material.color.set(new Color(0x874c62));
-      }
-
-      open.shift();
-
-      if (
-        next.position[0] === this.targetNode.position[0] &&
-        next.position[1] === this.targetNode.position[1]
-      ) {
-        console.log("end a*");
-
-        let nodePath = next.prevNode;
-
-        let pathCount = 0;
-
-        // const colorPath = setInterval(() => {
-        //   if (nodePath) {
-        //     this.ground
-        //       .getObjectByName(
-        //         `${nodePath.position[0]}+${nodePath.position[1]}`
-        //       )
-        //       //@ts-ignore
-        //       ?.material.color.set(new Color(0xf4bfbf));
-        //     pathCount += 1;
-        //     nodePath = nodePath.prevNode;
-        //   } else {
-        //     console.log(pathCount);
-        //     clearInterval(colorPath);
-        //   }
-        // }, 0);
-
-        while (nodePath) {
-          this.ground
-            .getObjectByName(`${nodePath.position[0]}+${nodePath.position[1]}`)
-            //@ts-ignore
-            ?.material.color.set(new Color(0xf4bfbf));
-          pathCount += 1;
-          nodePath = nodePath.prevNode;
-        }
-        console.log(pathCount);
-        return;
-      }
-
-      getNeighbours(next.position[0], next.position[1]).forEach((neighbour) => {
-        const { x, y } = neighbour;
-        const neighbourTemp = this.mapArray[y]?.[x];
-
-        let pass = true;
-
-        if (neighbour?.condition) {
-          let count = 0;
-          neighbour?.condition.forEach((item) => {
-            if (this.mapArray[item.y]?.[item.x]) {
-              count += 1;
-            }
-          });
-          if (count == 2) {
-            pass = false;
-          }
-        }
-
-        if (
-          (neighbourTemp && neighbourTemp.code !== 1 && pass) ||
-          (neighbourTemp && neighbourTemp.code === 3)
-        ) {
-          const newG =
-            (next.g || 0) +
-            findDistance(
-              next.position[1],
-              next.position[0],
-              neighbour.x,
-              neighbour.y
-            );
-
-          if (neighbourTemp.g && newG < neighbourTemp.g) {
-            const { x, y } = neighbour;
-            neighbourTemp.position = [y, x];
-
-            neighbourTemp.g = newG;
-            neighbourTemp.f =
-              newG +
-              findDistance(
-                x,
-                y,
-                this.targetNode.position[1],
-                this.targetNode.position[0]
-              );
-
-            if (!open.some((e) => e.position[1] === x && e.position[0] === y)) {
-              neighbourTemp.prevNode = next;
-              open.push(neighbourTemp);
-              open.sort((a, b) => a.f - b.f);
-            }
-          }
-        }
-      });
-    }
   }
 
   initMapArray(arrayMapNumber: number[][]) {
@@ -1009,6 +760,8 @@ class Three {
             }
             break;
         }
+
+        // console.log(this.objects?.ameModel?.get)
 
         const plane = new THREE.Mesh(
           new THREE.PlaneGeometry(planeWidth, planeWidth),
