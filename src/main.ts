@@ -5,7 +5,7 @@ import { MINI_PLANE_GROUND_WIDTH } from "./configs/constants";
 import a_star from "./components/pathFind/a_star";
 import "./style.css";
 import { nodeTypeRecursive } from "./types";
-import modelGLTFLoader from "./components/models/gltfLoader";
+import modelGLTFLoader from "./utils/gltfLoader";
 import {
   AME_PATH,
   ENVIROMENT_PATH,
@@ -17,6 +17,8 @@ import {
   FLAG_PATH,
 } from "./configs/path";
 import Light from "./components/light";
+import { getModelSize } from "./utils";
+import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
 class Three {
   renderer: THREE.WebGLRenderer;
@@ -24,6 +26,7 @@ class Three {
   camera: THREE.PerspectiveCamera;
   control: OrbitControls;
   ground: THREE.Group;
+  terrant: THREE.Group;
 
   node = this.createNode(0);
   wallNode = this.createNode(1);
@@ -32,22 +35,14 @@ class Three {
   heuristicFunction: 1 | 2 | 3 = 1;
   weight = 2;
   objects: {
-    ameModel: THREE.Scene | null;
-    flagModel: THREE.Scene | null;
-    rock1: THREE.Scene | null;
-    rock2: THREE.Scene | null;
-    rock3: THREE.Scene | null;
-    grass1: THREE.Scene | null;
-    grass2: THREE.Scene | null;
-  } = {
-    ameModel: null,
-    flagModel: null,
-    rock1: null,
-    rock2: null,
-    rock3: null,
-    grass1: null,
-    grass2: null,
-  };
+    ameModel?: GLTF;
+    flagModel?: GLTF;
+    rock1?: GLTF;
+    rock2?: GLTF;
+    rock3?: GLTF;
+    grass1?: GLTF;
+    grass2?: GLTF;
+  } = {};
   mapArrayNumber1 = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -631,16 +626,24 @@ class Three {
       const [ameModel, flagModel, rock1, rock2, rock3, grass1, grass2] = models;
 
       this.objects.ameModel = ameModel;
+      this.objects.ameModel?.scene.scale.set(6, 6, 6);
       this.objects.flagModel = flagModel;
+      this.objects.flagModel?.scene.scale.set(6, 6, 6);
       this.objects.rock1 = rock1;
+      this.objects.rock1?.scene.scale.set(48, 48, 48);
       this.objects.rock2 = rock2;
+      this.objects.rock2?.scene.scale.set(48, 48, 48);
       this.objects.rock3 = rock3;
+      this.objects.rock3?.scene.scale.set(48, 48, 48);
       this.objects.grass1 = grass1;
+      this.objects.grass1?.scene.scale.set(48, 48, 48);
       this.objects.grass2 = grass2;
+      this.objects.grass2?.scene.scale.set(48, 48, 48);
 
       this.initMapArray(this.mapArrayNumber1);
       this.initPathProperties(this.mapArrayNumber1);
       this.generateMap(this.mapArray);
+      this.generateTerrant(this.mapArray);
     };
     loadAssets();
 
@@ -728,55 +731,17 @@ class Three {
 
     mapArray.forEach((row: any, indexRow: number) => {
       row.forEach((item: any, indexItem: number) => {
-        let color;
-        let name = "";
-        switch (item.code) {
-          case 1:
-            //wall = 1
-            {
-              name = "wall";
-              color = 0xc7bca1;
-            }
-            break;
-          case 2:
-            //player = 2
-            {
-              name = "player";
-              color = 0xa7d2cb;
-            }
-            break;
-          case 3:
-            //target = 3
-            {
-              name = "target";
-              color = 0xf96666;
-            }
-            break;
-          default:
-            //ground = 0
-            {
-              name = `${indexRow}+${indexItem}`;
-              color = 0x65647c;
-            }
-            break;
+        const grassBlockClone = this.objects.grass1?.scene.clone();
+
+        if (grassBlockClone) {
+          grassBlockClone.rotation.set(0, 0, 0);
+          grassBlockClone.position.set(
+            planeWidth * (indexItem * planeSpace),
+            0,
+            planeWidth * (indexRow * planeSpace)
+          );
+          this.ground.add(grassBlockClone);
         }
-
-        // console.log(this.objects?.ameModel?.get)
-
-        const plane = new THREE.Mesh(
-          new THREE.PlaneGeometry(planeWidth, planeWidth),
-          new THREE.MeshBasicMaterial({
-            color: color,
-          })
-        );
-        plane.name = name;
-        plane.rotation.set(-Math.PI / 2, 0, 0);
-        plane.position.set(
-          planeWidth * (indexItem * planeSpace),
-          0,
-          planeWidth * (indexRow * planeSpace)
-        );
-        this.ground.add(plane);
       });
     });
 
@@ -785,12 +750,67 @@ class Three {
     this.scene.add(this.ground);
   }
 
+  generateTerrant(mapArray: nodeTypeRecursive[][]) {
+    this.scene.remove(this.terrant);
+    this.terrant = new THREE.Group();
+
+    const planeWidth = MINI_PLANE_GROUND_WIDTH;
+    const planeSpace = 1;
+    const mapWidth = mapArray[0].length * planeWidth * planeSpace;
+    const mapHeight = mapArray.length * planeWidth * planeSpace;
+
+    mapArray.forEach((row: any, indexRow: number) => {
+      row.forEach((item: any, indexItem: number) => {
+        let blockClone;
+
+        switch (item.code) {
+          case 1:
+            {
+              const randomNumber = Math.ceil(Math.random() * 3);
+              blockClone = this.objects[`rock${randomNumber}`]?.scene.clone();
+            }
+            break;
+          case 2:
+            {
+              blockClone = this.objects.ameModel?.scene;
+            }
+            break;
+          case 3:
+            blockClone = this.objects.flagModel?.scene.clone();
+            break;
+          default:
+            blockClone = null;
+            break;
+        }
+
+        if (blockClone && !blockClone?.scene) {
+          blockClone.position.set(
+            planeWidth * (indexItem * planeSpace),
+            0,
+            planeWidth * (indexRow * planeSpace)
+          );
+          this.terrant.add(blockClone);
+        } else if (blockClone) {
+          blockClone.scene.position.set(
+            planeWidth * (indexItem * planeSpace),
+            -20,
+            planeWidth * (indexRow * planeSpace)
+          );
+          this.terrant.add(blockClone.scene);
+        }
+      });
+    });
+
+    this.terrant.position.set(-(mapWidth / 2), 4, -(mapHeight / 2));
+    this.scene.add(this.terrant);
+  }
+
   createNode(code: number) {
     const node: nodeTypeRecursive = {
       f: code == 2 ? 0 : Number.MAX_SAFE_INTEGER,
       g: code == 2 ? 0 : Number.MAX_SAFE_INTEGER,
       code,
-      position: [0, 0],
+      position: code == 3 ? [0, 1] : [0, 0],
       prevNode: null,
     };
 
