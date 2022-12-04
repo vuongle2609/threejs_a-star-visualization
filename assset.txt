@@ -1,0 +1,3 @@
+flag: https://sketchfab.com/3d-models/bandeira-red-flag-0f935eaebb2d4c2cb5bf1906b758c2e1
+
+assets: https://sketchfab.com/3d-models/tilable-pixel-asset-pack-ca56ca86794b47c29e1592172b10d50a

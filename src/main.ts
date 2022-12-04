@@ -703,103 +703,224 @@ class Three {
 
     const open = [this.playerNode];
 
-    const startFind = setInterval(() => {
-      if (open.length !== 0) {
-        const next = open[0];
+    // const startFind = setInterval(() => {
+    //   if (open.length !== 0) {
+    //     const next = open[0];
 
-        if (next.code !== 3) {
+    //     if (next.code !== 3) {
+    //       this.ground
+    //         .getObjectByName(`${next.position[0]}+${next.position[1]}`)
+    //         //@ts-ignore
+    //         ?.material.color.set(new Color(0x874c62));
+    //     }
+
+    //     open.shift();
+
+    //     if (
+    //       next.position[0] === this.targetNode.position[0] &&
+    //       next.position[1] === this.targetNode.position[1]
+    //     ) {
+    //       console.log("end a*");
+
+    //       clearInterval(startFind);
+    //       let nodePath = next.prevNode;
+
+    //       let pathCount = 0;
+
+    //       // const colorPath = setInterval(() => {
+    //       //   if (nodePath) {
+    //       //     this.ground
+    //       //       .getObjectByName(
+    //       //         `${nodePath.position[0]}+${nodePath.position[1]}`
+    //       //       )
+    //       //       //@ts-ignore
+    //       //       ?.material.color.set(new Color(0xf4bfbf));
+    //       //     pathCount += 1;
+    //       //     nodePath = nodePath.prevNode;
+    //       //   } else {
+    //       //     console.log(pathCount);
+    //       //     clearInterval(colorPath);
+    //       //   }
+    //       // }, 0);
+
+    //       while (nodePath) {
+    //         this.ground
+    //           .getObjectByName(
+    //             `${nodePath.position[0]}+${nodePath.position[1]}`
+    //           )
+    //           //@ts-ignore
+    //           ?.material.color.set(new Color(0xf4bfbf));
+    //         pathCount += 1;
+    //         nodePath = nodePath.prevNode;
+    //       }
+    //       console.log(pathCount);
+    //       return;
+    //     }
+
+    //     getNeighbours(next.position[0], next.position[1]).forEach(
+    //       (neighbour) => {
+    //         const { x, y } = neighbour;
+    //         const neighbourTemp = this.mapArray[y]?.[x];
+
+    //         let pass = true;
+
+    //         if (neighbour?.condition) {
+    //           let count = 0;
+    //           neighbour?.condition.forEach((item) => {
+    //             if (this.mapArray[item.y]?.[item.x]) {
+    //               count += 1;
+    //             }
+    //           });
+    //           if (count == 2) {
+    //             pass = false;
+    //           }
+    //         }
+
+    //         if (
+    //           (neighbourTemp && neighbourTemp.code !== 1 && pass) ||
+    //           (neighbourTemp && neighbourTemp.code === 3)
+    //         ) {
+    //           const newG =
+    //             (next.g || 0) +
+    //             findDistance(
+    //               next.position[1],
+    //               next.position[0],
+    //               neighbour.x,
+    //               neighbour.y
+    //             );
+
+    //           if (neighbourTemp.g && newG < neighbourTemp.g) {
+    //             const { x, y } = neighbour;
+    //             neighbourTemp.position = [y, x];
+
+    //             neighbourTemp.g = newG;
+    //             neighbourTemp.f =
+    //               newG +
+    //               findDistance(
+    //                 x,
+    //                 y,
+    //                 this.targetNode.position[1],
+    //                 this.targetNode.position[0]
+    //               );
+
+    //             if (
+    //               !open.some((e) => e.position[1] === x && e.position[0] === y)
+    //             ) {
+    //               neighbourTemp.prevNode = next;
+    //               open.push(neighbourTemp);
+    //               open.sort((a, b) => a.f - b.f);
+    //             }
+    //           }
+    //         }
+    //       }
+    //     );
+    //   }
+    // }, 0);
+
+    while (open.length !== 0) {
+      const next = open[0];
+
+      if (next.code !== 3) {
+        this.ground
+          .getObjectByName(`${next.position[0]}+${next.position[1]}`)
+          //@ts-ignore
+          ?.material.color.set(new Color(0x874c62));
+      }
+
+      open.shift();
+
+      if (
+        next.position[0] === this.targetNode.position[0] &&
+        next.position[1] === this.targetNode.position[1]
+      ) {
+        console.log("end a*");
+
+        let nodePath = next.prevNode;
+
+        let pathCount = 0;
+
+        // const colorPath = setInterval(() => {
+        //   if (nodePath) {
+        //     this.ground
+        //       .getObjectByName(
+        //         `${nodePath.position[0]}+${nodePath.position[1]}`
+        //       )
+        //       //@ts-ignore
+        //       ?.material.color.set(new Color(0xf4bfbf));
+        //     pathCount += 1;
+        //     nodePath = nodePath.prevNode;
+        //   } else {
+        //     console.log(pathCount);
+        //     clearInterval(colorPath);
+        //   }
+        // }, 0);
+
+        while (nodePath) {
           this.ground
-            .getObjectByName(`${next.position[0]}+${next.position[1]}`)
+            .getObjectByName(`${nodePath.position[0]}+${nodePath.position[1]}`)
             //@ts-ignore
-            ?.material.color.set(new Color(0x874c62));
+            ?.material.color.set(new Color(0xf4bfbf));
+          pathCount += 1;
+          nodePath = nodePath.prevNode;
         }
+        console.log(pathCount);
+        return;
+      }
 
-        open.shift();
+      getNeighbours(next.position[0], next.position[1]).forEach((neighbour) => {
+        const { x, y } = neighbour;
+        const neighbourTemp = this.mapArray[y]?.[x];
+
+        let pass = true;
+
+        if (neighbour?.condition) {
+          let count = 0;
+          neighbour?.condition.forEach((item) => {
+            if (this.mapArray[item.y]?.[item.x]) {
+              count += 1;
+            }
+          });
+          if (count == 2) {
+            pass = false;
+          }
+        }
 
         if (
-          next.position[0] === this.targetNode.position[0] &&
-          next.position[1] === this.targetNode.position[1]
+          (neighbourTemp && neighbourTemp.code !== 1 && pass) ||
+          (neighbourTemp && neighbourTemp.code === 3)
         ) {
-          console.log("end a*");
+          const newG =
+            (next.g || 0) +
+            findDistance(
+              next.position[1],
+              next.position[0],
+              neighbour.x,
+              neighbour.y
+            );
 
-          clearInterval(startFind);
-          let nodePath = next.prevNode;
-
-          const colorPath = setInterval(() => {
-            if (nodePath) {
-              this.ground
-                .getObjectByName(
-                  `${nodePath.position[0]}+${nodePath.position[1]}`
-                )
-                //@ts-ignore
-                ?.material.color.set(new Color(0xf4bfbf));
-
-              nodePath = nodePath.prevNode;
-            } else clearInterval(colorPath);
-          }, 20);
-
-          return;
-        }
-
-        getNeighbours(next.position[0], next.position[1]).forEach(
-          (neighbour) => {
+          if (neighbourTemp.g && newG < neighbourTemp.g) {
             const { x, y } = neighbour;
-            const neighbourTemp = this.mapArray[y]?.[x];
+            neighbourTemp.position = [y, x];
 
-            let pass = true;
+            neighbourTemp.g = newG;
+            neighbourTemp.f =
+              newG +
+              findDistance(
+                x,
+                y,
+                this.targetNode.position[1],
+                this.targetNode.position[0]
+              );
 
-            if (neighbour?.condition) {
-              let count = 0;
-              neighbour?.condition.forEach((item) => {
-                if (this.mapArray[item.y]?.[item.x]) {
-                  count += 1;
-                }
-              });
-              if (count == 2) {
-                pass = false;
-              }
-            }
-
-            if (
-              (neighbourTemp && neighbourTemp.code !== 1 && pass) ||
-              (neighbourTemp && neighbourTemp.code === 3)
-            ) {
-              const newG =
-                (next.g || 0) +
-                findDistance(
-                  next.position[1],
-                  next.position[0],
-                  neighbour.x,
-                  neighbour.y
-                );
-
-              if (neighbourTemp.g && newG < neighbourTemp.g) {
-                const { x, y } = neighbour;
-                neighbourTemp.position = [y, x];
-
-                neighbourTemp.g = newG;
-                neighbourTemp.f =
-                  newG +
-                  findDistance(
-                    x,
-                    y,
-                    this.targetNode.position[1],
-                    this.targetNode.position[0]
-                  );
-
-                if (
-                  !open.some((e) => e.position[1] === x && e.position[0] === y)
-                ) {
-                  neighbourTemp.prevNode = next;
-                  open.push(neighbourTemp);
-                  open.sort((a, b) => a.f - b.f);
-                }
-              }
+            if (!open.some((e) => e.position[1] === x && e.position[0] === y)) {
+              neighbourTemp.prevNode = next;
+              open.push(neighbourTemp);
+              open.sort((a, b) => a.f - b.f);
             }
           }
-        );
-      }
-    }, 0);
+        }
+      });
+    }
   }
 
   initMapArray(arrayMapNumber: number[][]) {
