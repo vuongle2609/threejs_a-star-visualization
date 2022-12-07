@@ -58,7 +58,7 @@ class Three {
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0],
+    [0, 3, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -577,7 +577,10 @@ class Three {
   }
 
   initialize() {
-    this.renderer = new THREE.WebGLRenderer();
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+    });
+
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
 
@@ -687,9 +690,10 @@ class Three {
 
       let currentVector = 0;
       const moveChar = setInterval(() => {
-        this.objects.ameModel?.scene.position.add(
-          vectorsMove[currentVector].vector
-        );
+        const character = this.objects.ameModel?.scene;
+
+        character?.position.add(vectorsMove[currentVector].vector);
+
         onCurrentNodePath(
           vectorsMove[currentVector].position[1],
           vectorsMove[currentVector].position[0]
@@ -700,7 +704,7 @@ class Three {
         if (currentVector === vectorsMove.length - 1) {
           clearInterval(moveChar);
         }
-      }, 40);
+      }, 100);
     };
 
     document.querySelector("#start")?.addEventListener("click", () => {
@@ -909,26 +913,6 @@ class Three {
     requestAnimationFrame((t) => {
       this.RAF(t);
     });
-    // const character = this.objects.ameModel?.scene;
-    // console.log(this.destinition);
-    // if (this.destinition && this.destinition.length && character) {
-    //   console.log("char", character.position);
-    //   console.log("to", this.destinition[0].position);
-    //   console.log("aa", this.destinition[0].position.x);
-    //   console.log("bb", this.destinition[0].position.x - 0.1);
-    //   console.log("char", character.position.x);
-    //   if (
-    //     (character.position.x > this.destinition[0].position.x - 0.1 ||
-    //       character.position.x < this.destinition[0].position.x) &&
-    //     (character.position.z > this.destinition[0].position.z - 0.1 ||
-    //       character.position.z < this.destinition[0].position.z)
-    //   ) {
-    //     console.log("a");
-    //     this.destinition.shift();
-    //   }
-    //   console.log("to 2", this.destinition[0].position);
-    //   character.position.lerp(this.destinition[0].vector, 0.2);
-    // }
 
     this.renderer.render(this.scene, this.camera);
   }
