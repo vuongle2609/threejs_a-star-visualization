@@ -15,15 +15,35 @@ class a_star {
   pow = Math.pow;
   sqrt = Math.sqrt;
 
-  constructor(
-    playerNode: nodeTypeRecursive,
-    targetNode: nodeTypeRecursive,
-    groundGroup: THREE.Group,
-    mapArray: nodeTypeRecursive[][],
-    timeout?: number,
-    heuristicFunction?: 1 | 2 | 3,
-    weight?: number
-  ) {
+  onCurrentNodeSearch: ((x: number, y: number) => void) | undefined;
+  onCurrentNodePath: ((x: number, y: number) => void) | undefined;
+  onComplete:
+    | ((finalNode: nodeTypeRecursive, countTitle: number) => void)
+    | undefined;
+
+  constructor({
+    playerNode,
+    targetNode,
+    groundGroup,
+    mapArray,
+    timeout,
+    heuristicFunction,
+    weight,
+    onCurrentNodeSearch,
+    onCurrentNodePath,
+    onComplete,
+  }: {
+    playerNode: nodeTypeRecursive;
+    targetNode: nodeTypeRecursive;
+    groundGroup: THREE.Group;
+    mapArray: nodeTypeRecursive[][];
+    timeout?: number | null;
+    heuristicFunction?: 1 | 2 | 3;
+    weight?: number;
+    onCurrentNodeSearch?: (x: number, y: number) => void;
+    onCurrentNodePath?: (x: number, y: number) => void;
+    onComplete?: (finalNode: nodeTypeRecursive, countTitle: number) => void;
+  }) {
     this.playerNode = playerNode;
     this.targetNode = targetNode;
     this.groundGroup = groundGroup;
@@ -31,9 +51,14 @@ class a_star {
     this.timeout = timeout || undefined;
     this.heuristicFunction = heuristicFunction || 1;
     this.weight = weight || 2;
+
+    this.onCurrentNodeSearch = onCurrentNodeSearch;
+    this.onCurrentNodePath = onCurrentNodePath;
+    this.onComplete = onComplete;
   }
 
   findPath() {
+    console.log("star a*");
     this.playerNode.f =
       0 +
       this.findDistance(
@@ -61,9 +86,8 @@ class a_star {
 
   aStarFunction(open: nodeTypeRecursive[], callback?: () => void) {
     const next = open[0];
-
     if (next.code !== 3) {
-      this.colorNode(next.position[1], next.position[0], 0x874c62);
+      this.onCurrentNodeSearch?.(next.position[1], next.position[0]);
     }
 
     open.shift();
@@ -73,14 +97,13 @@ class a_star {
       next.position[1] === this.targetNode.position[1]
     ) {
       console.log("end a*");
-
-      let nodePath = next.prevNode;
+      let nodePath: nodeTypeRecursive | null = next;
 
       let pathCount = 0;
 
       const colorPath = () => {
         if (nodePath) {
-          this.colorNode(nodePath.position[1], nodePath.position[0], 0xf4bfbf);
+          this.onCurrentNodePath?.(nodePath.position[1], nodePath.position[0]);
           pathCount += 1;
           nodePath = nodePath.prevNode;
         }
@@ -100,7 +123,7 @@ class a_star {
         }, this.timeout);
       }
 
-      console.log(pathCount);
+      this.onComplete?.(next, pathCount);
       callback?.();
       return;
     }
@@ -162,12 +185,6 @@ class a_star {
           }
         }
       }
-    );
-  }
-
-  colorNode(x: number, y: number, color: number) {
-    (this.groundGroup.getObjectByName(`${y}+${x}`) as any)?.material.color.set(
-      new Color(color)
     );
   }
 

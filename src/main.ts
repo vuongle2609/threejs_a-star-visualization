@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Color, Group } from "three";
+import { Color, Group, Vector3 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { MINI_PLANE_GROUND_WIDTH } from "./configs/constants";
 import a_star from "./components/pathFind/a_star";
@@ -34,6 +34,9 @@ class Three {
   targetNode = this.createNode(3);
   heuristicFunction: 1 | 2 | 3 = 1;
   weight = 2;
+
+  destinition: any;
+
   objects: {
     ameModel?: GLTF;
     flagModel?: GLTF;
@@ -72,22 +75,22 @@ class Three {
     [0, 0, 0, 0, 0, 0],
   ];
   mapArrayNumber3 = [
-    [2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+    [2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    [1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+    [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0],
+    [0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
     [0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0],
-    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
+    [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+    [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
+    [0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
     [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
-    [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
-    [0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
+    [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0],
     [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0],
-    [0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+    [0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
     [0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0],
-    [0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0],
+    [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0],
     [0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 3],
+    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 3],
   ];
   mapArrayNumber4 = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -602,16 +605,6 @@ class Three {
 
     this.control = new OrbitControls(this.camera, this.renderer.domElement);
 
-    const findPathAstar = new a_star(
-      this.playerNode,
-      this.targetNode,
-      this.ground,
-      this.mapArray,
-      10,
-      this.heuristicFunction,
-      this.weight
-    );
-
     const loadAssets = async () => {
       const models = await modelGLTFLoader([
         AME_PATH,
@@ -625,8 +618,10 @@ class Three {
       //@ts-ignore
       const [ameModel, flagModel, rock1, rock2, rock3, grass1, grass2] = models;
 
+      ameModel.scene.name = "ame";
       this.objects.ameModel = ameModel;
       this.objects.ameModel?.scene.scale.set(6, 6, 6);
+      flagModel.scene.name = "flag";
       this.objects.flagModel = flagModel;
       this.objects.flagModel?.scene.scale.set(6, 6, 6);
       this.objects.rock1 = rock1;
@@ -647,7 +642,81 @@ class Three {
     };
     loadAssets();
 
+    const onCurrentNodeSearch = (x: number, y: number) => {
+      const currentNode = this.ground.getObjectByName(`${x}+${y}`) as any;
+      if (currentNode) {
+        currentNode.material.color.set(new THREE.Color(0x5f8d4e));
+      }
+    };
+
+    const onCurrentNodePath = (x: number, y: number) => {
+      const currentNode = this.ground.getObjectByName(`${x}+${y}`) as any;
+      if (currentNode) {
+        currentNode.material.color.set(new THREE.Color(0xffe15d));
+      }
+    };
+
+    const onComplete = (finalNode: nodeTypeRecursive, countNode: number) => {
+      let nodePath: nodeTypeRecursive | null = finalNode;
+      const vectorsMove: {
+        vector: Vector3;
+        position: number[];
+      }[] = [];
+
+      while (nodePath) {
+        if (nodePath.prevNode) {
+          const currentNode = this.ground.getObjectByName(
+            `${nodePath.position[1]}+${nodePath.position[0]}`
+          );
+          const prevNode = this.ground.getObjectByName(
+            `${nodePath.prevNode.position[1]}+${nodePath.prevNode.position[0]}`
+          );
+          if (currentNode && prevNode) {
+            vectorsMove.unshift({
+              vector: new THREE.Vector3().subVectors(
+                currentNode.position,
+                prevNode.position
+              ),
+              position: nodePath.position,
+            });
+          }
+        }
+
+        nodePath = nodePath.prevNode;
+      }
+
+      let currentVector = 0;
+      const moveChar = setInterval(() => {
+        this.objects.ameModel?.scene.position.add(
+          vectorsMove[currentVector].vector
+        );
+        onCurrentNodePath(
+          vectorsMove[currentVector].position[1],
+          vectorsMove[currentVector].position[0]
+        );
+
+        currentVector += 1;
+
+        if (currentVector === vectorsMove.length - 1) {
+          clearInterval(moveChar);
+        }
+      }, 40);
+    };
+
     document.querySelector("#start")?.addEventListener("click", () => {
+      const findPathAstar = new a_star({
+        playerNode: this.playerNode,
+        targetNode: this.targetNode,
+        groundGroup: this.ground,
+        mapArray: this.mapArray,
+        timeout: 10,
+        heuristicFunction: this.heuristicFunction,
+        weight: this.weight,
+        onCurrentNodeSearch: onCurrentNodeSearch,
+        // onCurrentNodePath: onCurrentNodePath,
+        onComplete: onComplete,
+      });
+
       findPathAstar.findPath();
     });
 
@@ -658,6 +727,7 @@ class Three {
           this.initMapArray(mapSelected);
           this.initPathProperties(mapSelected);
           this.generateMap(this.mapArray);
+          this.generateTerrant(this.mapArray);
         });
       }
     );
@@ -731,17 +801,19 @@ class Three {
 
     mapArray.forEach((row: any, indexRow: number) => {
       row.forEach((item: any, indexItem: number) => {
-        const grassBlockClone = this.objects.grass1?.scene.clone();
+        const groundBlock = new THREE.Mesh(
+          new THREE.BoxGeometry(planeWidth, planeWidth, planeWidth),
+          new THREE.MeshStandardMaterial({ color: 0x285430 })
+        );
 
-        if (grassBlockClone) {
-          grassBlockClone.rotation.set(0, 0, 0);
-          grassBlockClone.position.set(
-            planeWidth * (indexItem * planeSpace),
-            0,
-            planeWidth * (indexRow * planeSpace)
-          );
-          this.ground.add(grassBlockClone);
-        }
+        groundBlock.position.set(
+          planeWidth * (indexItem * planeSpace),
+          0,
+          planeWidth * (indexRow * planeSpace)
+        );
+        groundBlock.name = `${indexItem}+${indexRow}`;
+        groundBlock.receiveShadow = true;
+        this.ground.add(groundBlock);
       });
     });
 
@@ -784,19 +856,29 @@ class Three {
         }
 
         if (blockClone && !blockClone?.scene) {
+          let positionY = 0;
+          let positionX = 0;
+          let positionZ = 0;
+
+          if (blockClone.name === "ame") {
+            positionY = -2;
+          }
+
+          if (blockClone.name === "flag") {
+            positionY = -2;
+            positionX = -2;
+            positionZ = -3;
+          }
+
+          blockClone.traverse((item) => (item.castShadow = true));
+
           blockClone.position.set(
-            planeWidth * (indexItem * planeSpace),
-            0,
-            planeWidth * (indexRow * planeSpace)
+            planeWidth * (indexItem * planeSpace) + positionX,
+            positionY,
+            planeWidth * (indexRow * planeSpace) + positionZ
           );
+
           this.terrant.add(blockClone);
-        } else if (blockClone) {
-          blockClone.scene.position.set(
-            planeWidth * (indexItem * planeSpace),
-            -20,
-            planeWidth * (indexRow * planeSpace)
-          );
-          this.terrant.add(blockClone.scene);
         }
       });
     });
@@ -827,6 +909,26 @@ class Three {
     requestAnimationFrame((t) => {
       this.RAF(t);
     });
+    // const character = this.objects.ameModel?.scene;
+    // console.log(this.destinition);
+    // if (this.destinition && this.destinition.length && character) {
+    //   console.log("char", character.position);
+    //   console.log("to", this.destinition[0].position);
+    //   console.log("aa", this.destinition[0].position.x);
+    //   console.log("bb", this.destinition[0].position.x - 0.1);
+    //   console.log("char", character.position.x);
+    //   if (
+    //     (character.position.x > this.destinition[0].position.x - 0.1 ||
+    //       character.position.x < this.destinition[0].position.x) &&
+    //     (character.position.z > this.destinition[0].position.z - 0.1 ||
+    //       character.position.z < this.destinition[0].position.z)
+    //   ) {
+    //     console.log("a");
+    //     this.destinition.shift();
+    //   }
+    //   console.log("to 2", this.destinition[0].position);
+    //   character.position.lerp(this.destinition[0].vector, 0.2);
+    // }
 
     this.renderer.render(this.scene, this.camera);
   }
