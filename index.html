@@ -2,28 +2,85 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Threejs</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+      integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
   </head>
-  <body>
-    <div id="app">
+  <body class="m-0 overflow-hidden">
+    <canvas id="mainCanvas"></canvas>
+    <button
+      id="controlBtn"
+      class="absolute top-[20px] right-[20px] bg-[#C58940] px-4 py-3 rounded-lg text-white font-bold active:scale-90 transition-all ease-in-out"
+    >
+      Control
+    </button>
+    <div
+      id="mainControl"
+      class="w-[400px] bg-[#FAF8F1] rounded-lg absolute top-[80px] right-[20px] transition-all ease-in-out duration-150 p-4"
+    >
       <div class="buttons">
-        <button id="start">Start</button>
-        <button class="map">Map 1</button>
-        <button class="map">Map 2</button>
-        <button class="map">Map 3</button>
-        <button class="map">Map 4</button>
-        <button class="map">Map 5</button>
-        <button class="map">Map 6</button>
-        <button class="map">Map 7</button>
+        <button
+          id="start"
+          class="bg-[#C58940] px-4 py-2 rounded-lg text-white font-bold active:scale-90 transition-all ease-in-out"
+        >
+          Start <i class="fa-solid fa-play font-sm"></i>
+        </button>
+
+        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
+          Map 1
+        </button>
+        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
+          Map 2
+        </button>
+        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
+          Map 3
+        </button>
+        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
+          Map 4
+        </button>
+        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
+          Map 5
+        </button>
+        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
+          Map 6
+        </button>
+        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
+          Map 7
+        </button>
       </div>
       <div class="buttons1">
-        <button class="distance">DiagonalDistance</button>
-        <button class="distance">ManhattanDistance</button>
-        <button class="distance">EuclideanDistance</button>
+        <button
+          class="distance border-[1px] border-gray-400 px-4 py-2 rounded-lg"
+        >
+          DiagonalDistance
+        </button>
+        <button
+          class="distance border-[1px] border-gray-400 px-4 py-2 rounded-lg"
+        >
+          ManhattanDistance
+        </button>
+        <button
+          class="distance border-[1px] border-gray-400 px-4 py-2 rounded-lg"
+        >
+          EuclideanDistance
+        </button>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
+    <script>
+      const toggleControl = document.querySelector("#controlBtn");
+      const mainControl = document.querySelector("#mainControl");
+
+      toggleControl.addEventListener("click", () => {
+        mainControl.classList.toggle("translate-x-[450px]");
+      });
+    </script>
   </body>
 </html>

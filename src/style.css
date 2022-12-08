@@ -1,15 +1,10 @@
-body {
-  margin: 0;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.buttons {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-}
+@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap");
 
-.buttons1 {
-  position: absolute;
-  top: 50px;
-  left: 10px;
+* {
+  font-family: "Rubik", sans-serif;
+  box-sizing: border-box;
 }
