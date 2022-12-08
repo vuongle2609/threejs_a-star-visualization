@@ -1,86 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Threejs</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
-      integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-  </head>
-  <body class="m-0 overflow-hidden">
-    <canvas id="mainCanvas"></canvas>
-    <button
-      id="controlBtn"
-      class="absolute top-[20px] right-[20px] bg-[#C58940] px-4 py-3 rounded-lg text-white font-bold active:scale-90 transition-all ease-in-out"
-    >
-      Control
-    </button>
-    <div
-      id="mainControl"
-      class="w-[400px] bg-[#FAF8F1] rounded-lg absolute top-[80px] right-[20px] transition-all ease-in-out duration-150 p-4"
-    >
-      <div class="buttons">
-        <button
-          id="start"
-          class="bg-[#C58940] px-4 py-2 rounded-lg text-white font-bold active:scale-90 transition-all ease-in-out"
-        >
-          Start <i class="fa-solid fa-play font-sm"></i>
-        </button>
 
-        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
-          Map 1
-        </button>
-        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
-          Map 2
-        </button>
-        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
-          Map 3
-        </button>
-        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
-          Map 4
-        </button>
-        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
-          Map 5
-        </button>
-        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
-          Map 6
-        </button>
-        <button class="map border-[1px] border-gray-400 px-4 py-2 rounded-lg">
-          Map 7
-        </button>
-      </div>
-      <div class="buttons1">
-        <button
-          class="distance border-[1px] border-gray-400 px-4 py-2 rounded-lg"
-        >
-          DiagonalDistance
-        </button>
-        <button
-          class="distance border-[1px] border-gray-400 px-4 py-2 rounded-lg"
-        >
-          ManhattanDistance
-        </button>
-        <button
-          class="distance border-[1px] border-gray-400 px-4 py-2 rounded-lg"
-        >
-          EuclideanDistance
-        </button>
-      </div>
+<head>
+  <meta charset="UTF-8" />
+  <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Threejs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+    integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body class="m-0 overflow-hidden">
+  <canvas id="mainCanvas"></canvas>
+  <button id="controlBtn"
+    class="absolute top-[20px] right-[20px] bg-[#C58940] px-4 py-3 rounded-lg text-white font-bold active:scale-90 transition-all ease-in-out shadow-lg">
+    <i class="fa-solid fa-sliders"></i>
+  </button>
+
+  <!-- control panel -->
+  <div id="mainControl"
+    class="w-[280px] bg-[#FAF8F1] rounded-lg absolute top-[80px] right-[20px] transition-all ease-in-out duration-150 p-4 shadow-2xl">
+    <h1 class="font2 text-center text-2xl mb-3">
+      Path finding visualization
+      <span class="text-sm text-red-500">(with Ame)</span>
+    </h1>
+
+    <div class="mt-4">
+      <h3 class="font-[700]">Weight</h3>
+      <input type="text" value="2"
+        class="mt-1 w-full bg-transparent appearance-none border-[1px] border-gray-200 px-3 py-2 rounded-lg outline-none" />
     </div>
-    <script type="module" src="/src/main.ts"></script>
-    <script>
-      const toggleControl = document.querySelector("#controlBtn");
-      const mainControl = document.querySelector("#mainControl");
 
-      toggleControl.addEventListener("click", () => {
-        mainControl.classList.toggle("translate-x-[450px]");
-      });
-    </script>
-  </body>
+    <div class="mt-4">
+      <h3 class="font-[700]">Distance function</h3>
+      <select id="distance"
+        class="mt-1 w-full bg-transparent appearance-none border-[1px] border-gray-200 px-3 py-2 rounded-lg outline-none cursor-pointer">
+        <option value="1">DiagonalDistance</option>
+        <option value="2">ManhattanDistance</option>
+        <option value="3">EuclideanDistance</option>
+      </select>
+    </div>
+
+    <button id="edit"
+      class="bg-transparent px-4 py-2 rounded-lg w-full mt-4 font-bold active:scale-90 active:bg-gray-200 transition-all ease-in-out">
+      EDIT MODE <i class="fa-solid fa-pen ml-2"></i>
+    </button>
+
+    <button id="reset"
+      class="bg-[#FAEAB1] px-4 py-2 rounded-lg w-full mt-4 font-bold active:scale-90 active:bg-[#FAF8F1] transition-all ease-in-out">
+      RESET </i><i class="fa-solid fa-rotate-right  ml-2"></i>
+    </button>
+
+    <button id="start"
+      class="bg-[#C58940] px-4 py-2 rounded-lg w-full mt-4 text-white font-bold active:scale-90 transition-all ease-in-out">
+      START <i class="fa-solid fa-play font-sm ml-2"></i>
+    </button>
+  </div>
+
+  <!-- edit panel -->
+  <div id="mainEdit"
+    class="w-[280px] bg-[#FAF8F1] rounded-lg absolute top-[80px] right-[20px] transition-all ease-in-out duration-150 p-4 shadow-2xl translate-x-[450px]">
+    <h1 class="font2 text-center text-2xl mb-3">
+      Edit your map
+    </h1>
+
+    <button id="edited"
+      class="bg-[#82CD47] px-4 py-2 rounded-lg w-full mt-4 text-white font-bold active:scale-90 transition-all ease-in-out">
+      OKE <i class="fa-solid fa-check ml-2"></i>
+    </button>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+  <script>
+    const toggleControl = document.querySelector("#controlBtn");
+    const mainControl = document.querySelector("#mainControl");
+    const toggleEdit = document.querySelector("#edit");
+    const mainEdit = document.querySelector("#mainEdit");
+
+    toggleControl.addEventListener("click", () => {
+      mainEdit.classList.add("translate-x-[450px]");
+      mainControl.classList.toggle("translate-x-[450px]");
+    });
+
+
+  </script>
+</body>
+
 </html>

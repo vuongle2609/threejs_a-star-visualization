@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Vector3 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import Light from "./components/light";
 import MapRender from "./components/MapRender";
@@ -10,6 +11,7 @@ class Three {
   camera: THREE.PerspectiveCamera;
   control: OrbitControls;
   mainCanvas: any;
+  mapRender: MapRender;
 
   constructor() {
     this.initialize();
@@ -48,11 +50,14 @@ class Three {
 
     const light = new Light(this.scene);
 
-    const mapRender = new MapRender(this.scene);
-
     this.control = new OrbitControls(this.camera, this.renderer.domElement);
+    this.control.enableDamping = true;
+    this.control.enablePan = false;
 
-    this.camera.position.set(0, 300, 0);
+    this.mapRender = new MapRender(this.scene, this.camera, this.control);
+
+    this.camera.position.set(-100, 55, 174);
+    this.camera.rotateOnWorldAxis(new Vector3(), 180);
     this.camera.lookAt(0, 0, 0);
 
     this.RAF(0);
@@ -68,7 +73,8 @@ class Three {
     requestAnimationFrame((t) => {
       this.RAF(t);
     });
-
+    this.control.update();
+    this.mapRender.update();
     this.renderer.render(this.scene, this.camera);
   }
 }
