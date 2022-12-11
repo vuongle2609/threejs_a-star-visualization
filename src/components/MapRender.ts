@@ -1,11 +1,15 @@
 import * as THREE from "three";
-import { Vector2, Vector3 } from "three";
+import { Vector3 } from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
-import { MINI_PLANE_GROUND_WIDTH } from "../configs/constants";
+import {
+  GROUND_CODE,
+  MINI_PLANE_GROUND_WIDTH,
+  PLAYER_CODE,
+  TARGET_CODE,
+} from "../configs/constants";
 import {
   AME_PATH,
-  ENVIROMENT_PATH_GRASS_1,
-  ENVIROMENT_PATH_GRASS_2,
   ENVIROMENT_PATH_ROCK_1,
   ENVIROMENT_PATH_ROCK_2,
   ENVIROMENT_PATH_ROCK_3,
@@ -13,17 +17,17 @@ import {
 } from "../configs/path";
 import { nodeTypeRecursive } from "../types";
 import modelGLTFLoader from "../utils/gltfLoader";
+import { WALL_CODE } from "./../configs/constants";
 import a_star from "./pathFind/a_star";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 class MapRender {
   ground: THREE.Group;
   terrant: THREE.Group;
   heuristicFunction: 1 | 2 | 3 = 1;
   weight = 2;
-  node = this.createNode(0);
-  wallNode = this.createNode(1);
-  playerNode = this.createNode(2);
-  targetNode = this.createNode(3);
+  node = this.createNode(GROUND_CODE);
+  wallNode = this.createNode(WALL_CODE);
+  playerNode = this.createNode(PLAYER_CODE);
+  targetNode = this.createNode(TARGET_CODE);
 
   raycaster = new THREE.Raycaster();
   pointer = new THREE.Vector2();
@@ -37,10 +41,9 @@ class MapRender {
     rock1?: GLTF;
     rock2?: GLTF;
     rock3?: GLTF;
-    grass1?: GLTF;
-    grass2?: GLTF;
   } = {};
   mapArrayNumber = [
+    [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -51,8 +54,7 @@ class MapRender {
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -65,11 +67,21 @@ class MapRender {
   mapArray: nodeTypeRecursive[][] = [];
   scene: THREE.Scene;
   camera: THREE.Camera;
+  defaultEditModes = {
+    draw: false,
+    eraser: false,
+    target: false,
+    start: false,
+  };
   editModes = {
     draw: false,
     eraser: false,
+    target: false,
+    start: false,
   };
   control: OrbitControls;
+  character: THREE.Group | undefined;
+  characterCurrentPosition = new Vector3();
 
   constructor(
     scene: THREE.Scene,
@@ -90,8 +102,6 @@ class MapRender {
         ENVIROMENT_PATH_ROCK_1,
         ENVIROMENT_PATH_ROCK_2,
         ENVIROMENT_PATH_ROCK_3,
-        ENVIROMENT_PATH_GRASS_1,
-        ENVIROMENT_PATH_GRASS_2,
       ]);
       //@ts-ignore
       const [ameModel, flagModel, rock1, rock2, rock3, grass1, grass2] = models;
@@ -99,6 +109,7 @@ class MapRender {
       ameModel.scene.name = "ame";
       this.objects.ameModel = ameModel;
       this.objects.ameModel?.scene.scale.set(6, 6, 6);
+      this.character = this.objects.ameModel?.scene;
       flagModel.scene.name = "flag";
       this.objects.flagModel = flagModel;
       this.objects.flagModel?.scene.scale.set(6, 6, 6);
@@ -108,15 +119,13 @@ class MapRender {
       this.objects.rock2?.scene.scale.set(48, 48, 48);
       this.objects.rock3 = rock3;
       this.objects.rock3?.scene.scale.set(48, 48, 48);
-      this.objects.grass1 = grass1;
-      this.objects.grass1?.scene.scale.set(48, 48, 48);
-      this.objects.grass2 = grass2;
-      this.objects.grass2?.scene.scale.set(48, 48, 48);
 
       this.initMapArray(this.mapArrayNumber);
       this.initPathProperties(this.mapArrayNumber);
       this.generateMap(this.mapArray);
       this.generateTerrant(this.mapArray);
+      if (this.character?.position)
+        this.characterCurrentPosition = this.character?.position;
     };
     loadAssets();
 
@@ -164,8 +173,7 @@ class MapRender {
       }
       let currentVector = 0;
       const moveChar = setInterval(() => {
-        const character = this.objects.ameModel?.scene;
-        character?.position.add(vectorsMove[currentVector].vector);
+        this.character?.position.add(vectorsMove[currentVector].vector);
 
         onCurrentNodePath(
           vectorsMove[currentVector].position[1],
@@ -180,7 +188,18 @@ class MapRender {
       }, 100);
     };
 
-    document.querySelector("#start")?.addEventListener("click", () => {
+    const startBtn = document.querySelector("#start");
+    const resetBtn = document.querySelector("#reset");
+    const distanceSelect = document.querySelector("#distance");
+    const toggleEditBtn = document.querySelector("#edit");
+    const editedBtn = document.querySelector("#edited");
+    const drawBtn = document.querySelector("#draw");
+    const eraserBtn = document.querySelector("#eraser");
+    const startPointBtn = document.querySelector("#startPoint");
+    const targetPointBtn = document.querySelector("#targetPoint");
+    const weightInput = document.querySelector("#weight");
+
+    startBtn?.addEventListener("click", () => {
       const findPathAstar = new a_star({
         playerNode: this.playerNode,
         targetNode: this.targetNode,
@@ -197,19 +216,7 @@ class MapRender {
       findPathAstar.findPath();
     });
 
-    Object.values(document.getElementsByClassName("map")).forEach(
-      (item, index) => {
-        item?.addEventListener("click", () => {
-          const mapSelected = this[`mapArrayNumber`];
-          this.initMapArray(mapSelected);
-          this.initPathProperties(mapSelected);
-          this.generateMap(this.mapArray);
-          this.generateTerrant(this.mapArray);
-        });
-      }
-    );
-
-    document.getElementById("reset")?.addEventListener(
+    resetBtn?.addEventListener(
       "click",
       (e: any) => {
         const mapSelected = this[`mapArrayNumber`];
@@ -221,7 +228,7 @@ class MapRender {
       false
     );
 
-    document.getElementById("distance")?.addEventListener(
+    distanceSelect?.addEventListener(
       "change",
       (e: any) => {
         //@ts-ignore
@@ -230,24 +237,30 @@ class MapRender {
       false
     );
 
-    const toggleEdit = document.querySelector("#edit");
-    const edited = document.querySelector("#edited");
-    const drawBtn = document.querySelector("#draw");
-    const eraserBtn = document.querySelector("#eraser");
+    weightInput?.addEventListener("change", (e: any) => {
+      this.onChangeWeight(e);
+    });
 
-    toggleEdit?.addEventListener("click", () => {
+    toggleEditBtn?.addEventListener("click", () => {
+      this.changeButtonColor("draw");
       this.onClickEdit();
     });
 
-    edited?.addEventListener("click", () => {
+    startPointBtn?.addEventListener("click", () => {
+      this.onClickChangeStartPosition();
+    });
+
+    editedBtn?.addEventListener("click", () => {
       this.onEditComplete();
     });
 
     drawBtn?.addEventListener("click", () => {
+      this.changeButtonColor("draw");
       this.onClickEdit(true);
     });
 
     eraserBtn?.addEventListener("click", () => {
+      this.changeButtonColor("eraser");
       this.onClickEraser();
     });
 
@@ -265,10 +278,29 @@ class MapRender {
     });
   }
 
+  onChangeWeight(e: any) {
+    const valueInput = Number(e.target?.value);
+    if (Number.isInteger(valueInput)) {
+      this.weight = valueInput;
+    } else {
+      e.target.value = this.weight;
+    }
+  }
+
+  onClickChangeStartPosition() {
+    if (this.character?.position)
+      this.characterCurrentPosition = new Vector3().copy(
+        this.character.position
+      );
+    this.editModes = {
+      ...this.defaultEditModes,
+      start: true,
+    };
+  }
+
   onClickEraser() {
     this.editModes = {
-      ...this.editModes,
-      draw: false,
+      ...this.defaultEditModes,
       eraser: true,
     };
   }
@@ -288,8 +320,7 @@ class MapRender {
         this.generateTerrant(this.mapArray, true);
       }
       this.editModes = {
-        ...this.editModes,
-        eraser: false,
+        ...this.defaultEditModes,
         draw: true,
       };
     }, 100);
@@ -300,8 +331,7 @@ class MapRender {
     const mainEdit = document.querySelector("#mainEdit");
 
     this.editModes = {
-      ...this.editModes,
-      draw: false,
+      ...this.defaultEditModes,
     };
     this.control.reset();
     this.control.enableDamping = true;
@@ -314,11 +344,37 @@ class MapRender {
       this.mapArrayNumber[indexArray[1]][indexArray[0]] = 1;
     });
 
+    this.mapArrayNumber = this.mapArrayNumber.map((row, rowIndex) =>
+      row.map((col, colIndex) => {
+        const isObject = col === TARGET_CODE || col === PLAYER_CODE;
+        let returnNumber = isObject ? col : GROUND_CODE;
+        const nameNumberBlock = `${colIndex}+${rowIndex}`;
+
+        if (nameNumberBlock in this.wallsPosition && !isObject) {
+          returnNumber = WALL_CODE;
+        }
+
+        return returnNumber;
+      })
+    );
+
     const mapSelected = this[`mapArrayNumber`];
     this.initMapArray(mapSelected);
     this.initPathProperties(mapSelected);
     this.generateMap(this.mapArray);
     this.generateTerrant(this.mapArray);
+  }
+
+  changeButtonColor(action: string) {
+    const buttonsIdArray = ["draw", "eraser", "startPoint", "targetPoint"];
+
+    buttonsIdArray.forEach((item) => {
+      document.querySelector(`#${item}`)?.classList.remove("bg-[#FAEAB1]");
+      document.querySelector(`#${item}`)?.classList.add("bg-transparent");
+    });
+
+    document.querySelector(`#${action}`)?.classList.remove("bg-transparent");
+    document.querySelector(`#${action}`)?.classList.add("bg-[#FAEAB1]");
   }
 
   initMapArray(arrayMapNumber: number[][]) {
@@ -353,9 +409,9 @@ class MapRender {
     let targetPos = [0, 0];
     arrayMapNumber.forEach((row, rowIndex) => {
       row.forEach((col, colIndex) => {
-        if (col === 2) {
+        if (col === PLAYER_CODE) {
           playerPos = [rowIndex, colIndex];
-        } else if (col === 3) {
+        } else if (col === TARGET_CODE) {
           targetPos = [rowIndex, colIndex];
         }
       });
@@ -380,25 +436,28 @@ class MapRender {
           transparent: true,
         });
         let groundBlock;
+        let groundBlockPosY = 0;
 
         if (isEdit) {
           groundBlock = new THREE.Mesh(
             new THREE.PlaneGeometry(planeWidth, planeWidth),
             groundBlockMaterial
           );
-          groundBlock.material.opacity = item.code === 1 ? 0.5 : 1;
+          groundBlockPosY = 2;
+          groundBlock.material.opacity = item.code === WALL_CODE ? 0.5 : 1;
           groundBlock.rotation.set(-Math.PI / 2, 0, 0);
         } else {
           groundBlock = new THREE.Mesh(
             new THREE.BoxGeometry(planeWidth, planeWidth, planeWidth),
             groundBlockMaterial
           );
+
           groundBlock.material.opacity = 1;
         }
 
         groundBlock.position.set(
           planeWidth * (indexItem * planeSpace),
-          0,
+          groundBlockPosY,
           planeWidth * (indexRow * planeSpace)
         );
         groundBlock.name = `${indexItem}+${indexRow}`;
@@ -438,7 +497,7 @@ class MapRender {
             break;
           case 2:
             {
-              blockClone = this.objects.ameModel?.scene;
+              blockClone = this.character;
             }
             break;
           case 3:
@@ -483,10 +542,10 @@ class MapRender {
 
   createNode(code: number) {
     const node: nodeTypeRecursive = {
-      f: code == 2 ? 0 : Number.MAX_SAFE_INTEGER,
-      g: code == 2 ? 0 : Number.MAX_SAFE_INTEGER,
+      f: code == PLAYER_CODE ? 0 : Number.MAX_SAFE_INTEGER,
+      g: code == PLAYER_CODE ? 0 : Number.MAX_SAFE_INTEGER,
       code,
-      position: code == 3 ? [0, 1] : [0, 0],
+      position: code == TARGET_CODE ? [0, 1] : [0, 0],
       prevNode: null,
     };
 
@@ -494,17 +553,25 @@ class MapRender {
   }
 
   update() {
-    const { draw, eraser } = this.editModes;
+    const { draw, eraser, start, target } = this.editModes;
 
-    if (draw || eraser) {
+    if (draw || eraser || start || target) {
       this.camera.position.lerp(new Vector3(0, 300, 0), 0.07);
       this.camera.lookAt(0, 0, 0);
       this.control.enabled = false;
+    }
 
+    if (draw || eraser) {
+      this.character?.position.set(
+        this.characterCurrentPosition.x,
+        this.characterCurrentPosition.y,
+        this.characterCurrentPosition.z
+      );
       this.raycaster.setFromCamera(this.pointer, this.camera);
 
       const intersects = this.raycaster.intersectObjects(this.ground.children);
 
+      // reset opacity for prev assign block
       if (this.prevIntersect) {
         this.prevIntersect.material.opacity = 1;
       }
@@ -512,6 +579,7 @@ class MapRender {
       const intersectObjName = intersects[0]?.object.name;
       const intersectObj = this.ground.getObjectByName(intersectObjName) as any;
 
+      // looks suck
       if (intersectObj) {
         const isWall = intersectObjName in this.wallsPosition;
         if (this.isMouseDown) {
@@ -519,7 +587,6 @@ class MapRender {
             this.wallsPosition[intersectObjName] = 1;
           } else if (isWall && eraser) {
             delete this.wallsPosition[intersectObjName];
-            console.log("xoas");
           }
 
           if (eraser) {
@@ -534,6 +601,20 @@ class MapRender {
         }
 
         intersectObj.material.opacity = 0.5;
+      }
+    }
+
+    if (start) {
+      this.raycaster.setFromCamera(this.pointer, this.camera);
+      const intersects = this.raycaster.intersectObjects(this.ground.children);
+      const differentCoordinate = 40;
+      console.log(this.playerNode);
+      if (intersects[0]) {
+        this.character?.position.set(
+          intersects[0].point.x + differentCoordinate,
+          0,
+          intersects[0].point.z + differentCoordinate
+        );
       }
     }
   }

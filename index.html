@@ -28,7 +28,7 @@
 
     <div class="mt-4">
       <h3 class="font-[700]">Weight</h3>
-      <input type="text" value="2"
+      <input type="text" value="2" id="weight"
         class="mt-1 w-full bg-transparent appearance-none border-[1px] border-gray-200 px-3 py-2 rounded-lg outline-none" />
     </div>
 
@@ -65,15 +65,27 @@
       Edit your map
     </h1>
 
+
     <div class="flex">
       <button id="draw"
-        class="bg-[#FAEAB1] px-4 py-2 rounded-lg w-full mt-4 font-bold active:scale-90 active:bg-[#FAF8F1] transition-all ease-in-out mr-1">
+        class="px-4 py-2 rounded-lg w-full mt-4 font-bold active:scale-90 transition-all ease-in-out mr-1 ">
         DRAW </i><i class="fa-solid fa-rotate-right  ml-1"></i>
       </button>
 
       <button id="eraser"
-        class="bg-[#E97777] px-4 py-2 rounded-lg w-full mt-4 font-bold text-white active:scale-90 active:bg-gray-200 transition-all ease-in-out">
+        class="px-4 py-2 rounded-lg w-full mt-4 font-bold active:scale-90 transition-all ease-in-out ">
         ERASER <i class="fa-solid fa-eraser ml-1"></i>
+      </button>
+    </div>
+    <div class="flex">
+      <button id="startPoint"
+        class="px-4 py-2 rounded-lg w-full mt-4 font-bold active:scale-90 transition-all ease-in-out mr-1 ">
+        START </i><i class="fa-solid fa-arrow-right  ml-1"></i>
+      </button>
+
+      <button id="targetPoint"
+        class="px-4 py-2 rounded-lg w-full mt-4 font-bold active:scale-90 transition-all ease-in-out ">
+        TARGET <i class="fa-solid fa-flag ml-1"></i>
       </button>
     </div>
 
@@ -93,8 +105,6 @@
       mainEdit.classList.add("translate-x-[450px]");
       mainControl.classList.toggle("translate-x-[450px]");
     });
-
-
   </script>
 </body>
 
