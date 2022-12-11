@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Vector3 } from "three";
+import { Vector2, Vector3 } from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { MINI_PLANE_GROUND_WIDTH } from "../configs/constants";
 import {
@@ -15,7 +15,6 @@ import { nodeTypeRecursive } from "../types";
 import modelGLTFLoader from "../utils/gltfLoader";
 import a_star from "./pathFind/a_star";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-
 class MapRender {
   ground: THREE.Group;
   terrant: THREE.Group;
@@ -29,7 +28,7 @@ class MapRender {
   raycaster = new THREE.Raycaster();
   pointer = new THREE.Vector2();
   isMouseDown = false;
-  wallsPosition: string[] = [];
+  wallsPosition: { [key: string]: any } = {};
   prevIntersect: any = null;
 
   objects: {
@@ -66,7 +65,10 @@ class MapRender {
   mapArray: nodeTypeRecursive[][] = [];
   scene: THREE.Scene;
   camera: THREE.Camera;
-  edit: boolean;
+  editModes = {
+    draw: false,
+    eraser: false,
+  };
   control: OrbitControls;
 
   constructor(
@@ -160,11 +162,9 @@ class MapRender {
 
         nodePath = nodePath.prevNode;
       }
-
       let currentVector = 0;
       const moveChar = setInterval(() => {
         const character = this.objects.ameModel?.scene;
-        // using lerp in future
         character?.position.add(vectorsMove[currentVector].vector);
 
         onCurrentNodePath(
@@ -230,65 +230,86 @@ class MapRender {
       false
     );
 
-    const mainControl = document.querySelector("#mainControl");
     const toggleEdit = document.querySelector("#edit");
-    const mainEdit = document.querySelector("#mainEdit");
     const edited = document.querySelector("#edited");
+    const drawBtn = document.querySelector("#draw");
+    const eraserBtn = document.querySelector("#eraser");
 
     toggleEdit?.addEventListener("click", () => {
-      this.control.enableDamping = false;
-      // prevent glosbe when control damping make the final position wrong
-      setTimeout(() => {
-        this.control.saveState();
-        mainEdit?.classList.remove("translate-x-[450px]");
-        mainControl?.classList.add("translate-x-[450px]");
-        this.camera.position.set(0, 100, 300);
-        this.edit = true;
-      }, 100);
+      this.onClickEdit();
     });
 
     edited?.addEventListener("click", () => {
       this.onEditComplete();
     });
 
-    window.addEventListener(
-      "mousemove",
-      (e) => {
-        this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-        this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      },
-      false
-    );
+    drawBtn?.addEventListener("click", () => {
+      this.onClickEdit(true);
+    });
 
-    window.addEventListener(
-      "mousedown",
-      (e) => {
-        this.isMouseDown = true;
-      },
-      false
-    );
+    eraserBtn?.addEventListener("click", () => {
+      this.onClickEraser();
+    });
 
-    window.addEventListener(
-      "mouseup",
-      (e) => {
-        this.isMouseDown = false;
-      },
-      false
-    );
+    window.addEventListener("mousemove", (e) => {
+      this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    });
+
+    window.addEventListener("mousedown", (e) => {
+      this.isMouseDown = true;
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      this.isMouseDown = false;
+    });
+  }
+
+  onClickEraser() {
+    this.editModes = {
+      ...this.editModes,
+      draw: false,
+      eraser: true,
+    };
+  }
+
+  onClickEdit(isChildEdit?: boolean) {
+    this.control.enableDamping = false;
+    // prevent glosbe when control damping make the final position wrong
+    setTimeout(() => {
+      if (!isChildEdit) {
+        const mainControl = document.querySelector("#mainControl");
+        const mainEdit = document.querySelector("#mainEdit");
+        this.control.saveState();
+        mainEdit?.classList.remove("translate-x-[450px]");
+        mainControl?.classList.add("translate-x-[450px]");
+        this.camera.position.set(0, 100, 300);
+        this.generateMap(this.mapArray, true);
+        this.generateTerrant(this.mapArray, true);
+      }
+      this.editModes = {
+        ...this.editModes,
+        eraser: false,
+        draw: true,
+      };
+    }, 100);
   }
 
   onEditComplete() {
     const mainControl = document.querySelector("#mainControl");
     const mainEdit = document.querySelector("#mainEdit");
 
-    this.edit = false;
+    this.editModes = {
+      ...this.editModes,
+      draw: false,
+    };
     this.control.reset();
     this.control.enableDamping = true;
     this.control.enabled = true;
     mainEdit?.classList.add("translate-x-[450px]");
     mainControl?.classList.remove("translate-x-[450px]");
 
-    this.wallsPosition.forEach((item, index) => {
+    Object.keys(this.wallsPosition).forEach((item, index) => {
       const indexArray = item.split("+");
       this.mapArrayNumber[indexArray[1]][indexArray[0]] = 1;
     });
@@ -298,8 +319,6 @@ class MapRender {
     this.initPathProperties(mapSelected);
     this.generateMap(this.mapArray);
     this.generateTerrant(this.mapArray);
-
-    this.wallsPosition = [];
   }
 
   initMapArray(arrayMapNumber: number[][]) {
@@ -345,7 +364,7 @@ class MapRender {
     this.targetNode.position = targetPos;
   }
 
-  generateMap(mapArray: nodeTypeRecursive[][]) {
+  generateMap(mapArray: nodeTypeRecursive[][], isEdit?: boolean) {
     this.scene.remove(this.ground);
     this.ground = new THREE.Group();
 
@@ -356,10 +375,26 @@ class MapRender {
 
     mapArray.forEach((row: any, indexRow: number) => {
       row.forEach((item: any, indexItem: number) => {
-        const groundBlock = new THREE.Mesh(
-          new THREE.BoxGeometry(planeWidth, planeWidth, planeWidth),
-          new THREE.MeshStandardMaterial({ color: 0x285430 })
-        );
+        const groundBlockMaterial = new THREE.MeshStandardMaterial({
+          color: 0x285430,
+          transparent: true,
+        });
+        let groundBlock;
+
+        if (isEdit) {
+          groundBlock = new THREE.Mesh(
+            new THREE.PlaneGeometry(planeWidth, planeWidth),
+            groundBlockMaterial
+          );
+          groundBlock.material.opacity = item.code === 1 ? 0.5 : 1;
+          groundBlock.rotation.set(-Math.PI / 2, 0, 0);
+        } else {
+          groundBlock = new THREE.Mesh(
+            new THREE.BoxGeometry(planeWidth, planeWidth, planeWidth),
+            groundBlockMaterial
+          );
+          groundBlock.material.opacity = 1;
+        }
 
         groundBlock.position.set(
           planeWidth * (indexItem * planeSpace),
@@ -367,8 +402,6 @@ class MapRender {
           planeWidth * (indexRow * planeSpace)
         );
         groundBlock.name = `${indexItem}+${indexRow}`;
-        groundBlock.material.transparent = true;
-        groundBlock.material.opacity = 1;
         groundBlock.receiveShadow = true;
         this.ground.add(groundBlock);
       });
@@ -379,7 +412,7 @@ class MapRender {
     this.scene.add(this.ground);
   }
 
-  generateTerrant(mapArray: nodeTypeRecursive[][]) {
+  generateTerrant(mapArray: nodeTypeRecursive[][], isEdit?: boolean) {
     this.scene.remove(this.terrant);
     this.terrant = new THREE.Group();
 
@@ -395,8 +428,12 @@ class MapRender {
         switch (item.code) {
           case 1:
             {
-              const randomNumber = Math.ceil(Math.random() * 3);
-              blockClone = this.objects[`rock${randomNumber}`]?.scene.clone();
+              if (!isEdit) {
+                const randomNumber = Math.ceil(Math.random() * 3);
+                blockClone = this.objects[`rock${randomNumber}`]?.scene.clone();
+              } else {
+                blockClone = null;
+              }
             }
             break;
           case 2:
@@ -457,7 +494,9 @@ class MapRender {
   }
 
   update() {
-    if (this.edit) {
+    const { draw, eraser } = this.editModes;
+
+    if (draw || eraser) {
       this.camera.position.lerp(new Vector3(0, 300, 0), 0.07);
       this.camera.lookAt(0, 0, 0);
       this.control.enabled = false;
@@ -472,16 +511,26 @@ class MapRender {
 
       const intersectObjName = intersects[0]?.object.name;
       const intersectObj = this.ground.getObjectByName(intersectObjName) as any;
-      if (intersectObj) {
-        this.prevIntersect = intersectObj;
 
-        if (!this.isMouseDown) {
-          this.prevIntersect = intersectObj;
-        } else {
-          if (!this.wallsPosition.includes(intersectObjName)) {
-            this.wallsPosition.push(intersectObjName);
+      if (intersectObj) {
+        const isWall = intersectObjName in this.wallsPosition;
+        if (this.isMouseDown) {
+          if (!isWall && draw) {
+            this.wallsPosition[intersectObjName] = 1;
+          } else if (isWall && eraser) {
+            delete this.wallsPosition[intersectObjName];
+            console.log("xoas");
           }
-          this.prevIntersect = null;
+
+          if (eraser) {
+            this.prevIntersect = intersectObj;
+          } else if (draw) {
+            this.prevIntersect = null;
+          }
+        } else {
+          if (!isWall) {
+            this.prevIntersect = intersectObj;
+          }
         }
 
         intersectObj.material.opacity = 0.5;

@@ -20,7 +20,7 @@
 
   <!-- control panel -->
   <div id="mainControl"
-    class="w-[280px] bg-[#FAF8F1] rounded-lg absolute top-[80px] right-[20px] transition-all ease-in-out duration-150 p-4 shadow-2xl">
+    class="w-[300px] bg-[#FAF8F1] rounded-lg absolute top-[80px] right-[20px] transition-all ease-in-out duration-150 p-4 shadow-2xl">
     <h1 class="font2 text-center text-2xl mb-3">
       Path finding visualization
       <span class="text-sm text-red-500">(with Ame)</span>
@@ -64,6 +64,18 @@
     <h1 class="font2 text-center text-2xl mb-3">
       Edit your map
     </h1>
+
+    <div class="flex">
+      <button id="draw"
+        class="bg-[#FAEAB1] px-4 py-2 rounded-lg w-full mt-4 font-bold active:scale-90 active:bg-[#FAF8F1] transition-all ease-in-out mr-1">
+        DRAW </i><i class="fa-solid fa-rotate-right  ml-1"></i>
+      </button>
+
+      <button id="eraser"
+        class="bg-[#E97777] px-4 py-2 rounded-lg w-full mt-4 font-bold text-white active:scale-90 active:bg-gray-200 transition-all ease-in-out">
+        ERASER <i class="fa-solid fa-eraser ml-1"></i>
+      </button>
+    </div>
 
     <button id="edited"
       class="bg-[#82CD47] px-4 py-2 rounded-lg w-full mt-4 text-white font-bold active:scale-90 transition-all ease-in-out">
