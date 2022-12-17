@@ -1,1 +1,1 @@
-Astar pathfinding visualization
+###A-star pathfinding visualization
